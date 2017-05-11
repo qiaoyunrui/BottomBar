@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="item_margin">8dp</dimen>
+    <dimen name="img_icon_size">28dp</dimen>
+    <dimen name="tv_title_size">12sp</dimen>
+</resources>
