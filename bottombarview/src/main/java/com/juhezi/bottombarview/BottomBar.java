@@ -1,6 +1,5 @@
 package com.juhezi.bottombarview;
 
-import android.animation.ObjectAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
@@ -74,8 +73,8 @@ public class BottomBar extends LinearLayout {
     }
 
     @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
         childXs = new float[getChildCount()];
         for (int i = 0; i < getChildCount(); i++) {
             childXs[i] = getChildAt(i).getX();
@@ -101,15 +100,31 @@ public class BottomBar extends LinearLayout {
                 startX = ev.getX();
                 startY = ev.getY();
                 selectPosition = getTouchChild(startX);
-                moveIconUpOrDown(selectPosition, true);
+                if (selectPosition != -1) {
+                    moveIconUp(selectPosition);
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 float dx = ev.getX() - startX;
                 float dy = ev.getY() - startY;
-                Log.i(TAG, "dispatchTouchEvent: " + dx + " " + dy);
+                if (selectPosition != -1 && dx != 0f) {
+                    float t = dx / dy;
+                    double radian = Math.atan(t);
+                    float degree = (float) Math.toDegrees(radian);
+                    //对角度进行改变
+                    if (dy > 0f) {
+                        degree += 180f;
+                    }
+                    if (dx > 0 && dy < 0) {
+                        degree += 360f;
+                    }
+                    moveIcon(selectPosition, degree);
+                }
                 break;
             case MotionEvent.ACTION_UP:
-                moveIconUpOrDown(selectPosition, false);
+                if (selectPosition != -1) {
+                    resetIcon(selectPosition);
+                }
                 break;
         }
         return super.dispatchTouchEvent(ev);
@@ -125,24 +140,45 @@ public class BottomBar extends LinearLayout {
             if (x > childXs[i] && x <= childXs[i + 1])
                 return i;
         }
-        return childXs.length - 1;
+        if (x > childXs[childXs.length - 1]) {
+            return childXs.length - 1;
+        } else {
+            return -1;
+        }
     }
 
     /**
-     * 将图标向上移动
+     * 将图标向上或者向下移动
      *
      * @param position
      * @return
      */
-    private void moveIconUpOrDown(int position, boolean up) {
-        int dest = up ? 10 : -10;
+    private void moveIconUp(int position) {
         View v = getChildAt(position);
         ImageView imgIcon = (ImageView) v.findViewById(R.id.img_icon);
         if (imgIcon != null) {
-            ObjectAnimator.ofFloat(imgIcon, "translationY", dest)
-                    .start();
+            imgIcon.setTranslationY(-10f);
+        }
+    }
+
+    private void moveIcon(int position, float degree) {
+        View v = getChildAt(position);
+        ImageView imgIcon = (ImageView) v.findViewById(R.id.img_icon);
+        if (imgIcon != null) {
+            float dx = (float) (10 * Math.sin(Math.toRadians(degree)));
+            float dy = (float) (10 * Math.cos(Math.toRadians(degree)));
+            imgIcon.setTranslationX(-dx);
+            imgIcon.setTranslationY(-dy);
+        }
+    }
+
+    private void resetIcon(int position) {
+        View v = getChildAt(position);
+        ImageView imgIcon = (ImageView) v.findViewById(R.id.img_icon);
+        if (imgIcon != null) {
+            imgIcon.setTranslationX(0);
+            imgIcon.setTranslationY(0);
         }
     }
 
 }
-
